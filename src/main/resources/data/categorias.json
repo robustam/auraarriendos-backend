@@ -1,0 +1,14 @@
+[
+  {
+    "id": "casa",
+    "nombre": "Casa",
+    "descripcion": "Casas con patio o jardín, ideales para familias y mascotas.",
+    "imagen": "/img/prop-2.jpg"
+  },
+  {
+    "id": "departamento",
+    "nombre": "Departamento",
+    "descripcion": "Departamentos cerca del metro, con servicios y seguridad.",
+    "imagen": "/img/prop-3.jpg"
+  }
+]

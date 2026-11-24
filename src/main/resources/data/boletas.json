@@ -1,0 +1,102 @@
+[
+  {
+    "numero": 20260001,
+    "fecha": "2026-08-12T15:20:00.000Z",
+    "estado": "pagada",
+    "cliente": {
+      "nombre": "Matías",
+      "apellidos": "Fernández Lira",
+      "correo": "cliente@gmail.com"
+    },
+    "direccion": {
+      "calle": "Av. Vicuña Mackenna 8900",
+      "departamento": "",
+      "region": "Región Metropolitana de Santiago",
+      "comuna": "La Florida",
+      "indicaciones": ""
+    },
+    "fechaInicio": "2026-09-01",
+    "tarjeta": "•••• 4242",
+    "codigoAutorizacion": "AUT-583920",
+    "usuarioCorreo": "cliente@gmail.com",
+    "items": [
+      {
+        "propiedadId": "PR-1005",
+        "nombre": "Studio acogedor en Concepción",
+        "comuna": "Concepción",
+        "imagen": "/img/prop-5-1.jpg",
+        "precio": 420000
+      }
+    ],
+    "total": 420000
+  },
+  {
+    "numero": 20260002,
+    "fecha": "2026-09-03T18:05:00.000Z",
+    "estado": "rechazada",
+    "cliente": {
+      "nombre": "Matías",
+      "apellidos": "Fernández Lira",
+      "correo": "cliente@gmail.com"
+    },
+    "direccion": {
+      "calle": "Av. Vicuña Mackenna 8900",
+      "departamento": "",
+      "region": "Región Metropolitana de Santiago",
+      "comuna": "La Florida",
+      "indicaciones": ""
+    },
+    "fechaInicio": "2026-10-01",
+    "tarjeta": "•••• 0002",
+    "motivoRechazo": "Tarjeta rechazada por el banco emisor.",
+    "usuarioCorreo": "cliente@gmail.com",
+    "items": [
+      {
+        "propiedadId": "PR-1002",
+        "nombre": "Casa con jardín en Ñuñoa",
+        "comuna": "Ñuñoa",
+        "imagen": "/img/prop-2-1.jpg",
+        "precio": 980000
+      }
+    ],
+    "total": 980000
+  },
+  {
+    "numero": 20260003,
+    "fecha": "2026-10-02T13:40:00.000Z",
+    "estado": "pagada",
+    "cliente": {
+      "nombre": "Matías",
+      "apellidos": "Fernández Lira",
+      "correo": "cliente@gmail.com"
+    },
+    "direccion": {
+      "calle": "Av. Vicuña Mackenna 8900",
+      "departamento": "",
+      "region": "Región Metropolitana de Santiago",
+      "comuna": "La Florida",
+      "indicaciones": ""
+    },
+    "fechaInicio": "2026-11-01",
+    "tarjeta": "•••• 4242",
+    "codigoAutorizacion": "AUT-771045",
+    "usuarioCorreo": "cliente@gmail.com",
+    "items": [
+      {
+        "propiedadId": "PR-1009",
+        "nombre": "Departamento minimalista en Temuco",
+        "comuna": "Temuco",
+        "imagen": "/img/prop-9-1.jpg",
+        "precio": 340000
+      },
+      {
+        "propiedadId": "PR-1010",
+        "nombre": "Casa familiar en Puente Alto",
+        "comuna": "Puente Alto",
+        "imagen": "/img/prop-10-1.jpg",
+        "precio": 560000
+      }
+    ],
+    "total": 900000
+  }
+]
