@@ -5,6 +5,7 @@ import cl.duoc.auraarriendos.dto.ErrorResponse;
 import cl.duoc.auraarriendos.dto.EstadoRequest;
 import cl.duoc.auraarriendos.dto.ProductoDTO;
 import cl.duoc.auraarriendos.dto.ProductoRequest;
+import cl.duoc.auraarriendos.security.UsuarioActual;
 import cl.duoc.auraarriendos.service.ProductoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -15,6 +16,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -40,7 +42,7 @@ public class ProductoController {
     }
 
     @GetMapping("/todos")
-    @Operation(summary = "Listar todas las propiedades", description = "Incluye pendientes y rechazadas (panel de administración).")
+    @Operation(summary = "Listar todas las propiedades", description = "Incluye pendientes y rechazadas. Roles: Administrador y Vendedor.")
     @ApiResponse(responseCode = "200", description = "Listado completo")
     public List<ProductoDTO> listarTodas() {
         return productoService.listarTodas();
@@ -71,7 +73,9 @@ public class ProductoController {
     @GetMapping("/publicador/{correo}")
     @Operation(summary = "Listar las propiedades que publicó un usuario", description = "Usado en \"Mis publicaciones\".")
     @ApiResponse(responseCode = "200", description = "Propiedades del usuario")
-    public List<ProductoDTO> listarPorPublicador(@Parameter(example = "cliente@gmail.com") @PathVariable String correo) {
+    public List<ProductoDTO> listarPorPublicador(@Parameter(example = "cliente@gmail.com") @PathVariable String correo,
+                                                 Authentication auth) {
+        UsuarioActual.verificarDuenoOStaff(auth, correo);
         return productoService.listarPorPublicador(correo);
     }
 
@@ -83,7 +87,7 @@ public class ProductoController {
     }
 
     @PostMapping
-    @Operation(summary = "Crear una propiedad (administrador)")
+    @Operation(summary = "Crear una propiedad", description = "Rol: Administrador.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Propiedad creada"),
             @ApiResponse(responseCode = "400", description = "Datos inválidos o la oferta no es menor al precio",
@@ -102,8 +106,9 @@ public class ProductoController {
             @ApiResponse(responseCode = "400", description = "Datos inválidos",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    public ResponseEntity<ProductoDTO> publicar(@Valid @RequestBody ProductoRequest req) {
-        return creado(productoService.publicar(req, req.publicadoPor()));
+    public ResponseEntity<ProductoDTO> publicar(@Valid @RequestBody ProductoRequest req, Authentication auth) {
+        // El publicador es el usuario del token
+        return creado(productoService.publicar(req, auth.getName()));
     }
 
     @PutMapping("/{id}")

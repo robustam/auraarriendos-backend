@@ -24,6 +24,8 @@ Todas las pruebas siguen el formato **Given – When – Then** (Dado – Cuando
 | Unitaria | `BoletaServiceTest` | Pago aprobado (oferta y stock), rechazado (stock igual), sin stock, fecha pasada, tarjeta inválida, duplicados |
 | Controlador | `ProductoControllerTest` | Códigos HTTP 200, 201 + Location, 400 con errores por campo, 404 |
 | Integración | `FlujoCompraIntegrationTest` | Compra completa API → servicio → H2, 409 por API, enlaces HATEOAS, Swagger |
+| Unitaria | `JwtServiceTest` | Token con correo y rol, tipo access/refresh, firma alterada, vencido, secreto corto |
+| Integración | `SeguridadIntegrationTest` | Login 200/401, rutas públicas/privadas, 403 por rol (cliente, vendedor), admin total, rotación del refresh, logout, registro siempre Cliente |
 | Integración | `DataLoaderIntegrationTest` | Carga inicial, roles, BCrypt y datos DataFaker válidos |
 
 ## Cómo ejecutar
@@ -37,8 +39,9 @@ Resultado esperado: **BUILD SUCCESS**, 0 fallas.
 ## Pruebas manuales (Swagger / Postman)
 
 1. `GET /api/v1/productos` → 200 con el catálogo.
-2. `POST /api/v1/categorias` con `{"nombre":"Oficina"}` → 201.
-3. `DELETE /api/v1/categorias/casa` → 409 (tiene propiedades).
-4. `POST /api/v1/boletas` con la tarjeta `4242 4242 4242 4242` → 201, `estado: pagada`.
-5. Repetir con `4000 0000 0000 0002` → 201, `estado: rechazada`.
-6. `GET /api/v2/productos/PR-1001` → respuesta con `_links`.
+2. `POST /api/v1/categorias` con `{"nombre":"Oficina"}` y token de admin → 201; con token de cliente → 403.
+3. `DELETE /api/v1/categorias/casa` con token de admin → 409 (tiene propiedades); sin token → 401.
+4. `POST /api/v1/auth/login` con `cliente@gmail.com` / `cliente123` y pegar el token en **Authorize**.
+5. `POST /api/v1/boletas` con la tarjeta `4242 4242 4242 4242` → 201, `estado: pagada`.
+6. Repetir con `4000 0000 0000 0002` → 201, `estado: rechazada`.
+7. `GET /api/v2/productos/PR-1001` → respuesta con `_links`.

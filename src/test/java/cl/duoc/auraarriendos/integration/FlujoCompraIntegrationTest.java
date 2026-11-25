@@ -11,7 +11,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import com.jayway.jsonpath.JsonPath;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -39,9 +41,12 @@ class FlujoCompraIntegrationTest {
     private UsuarioRepository usuarioRepository;
     @Autowired
     private BoletaRepository boletaRepository;
+    @Autowired
+    private RefreshTokenRepository refreshTokenRepository;
 
     @BeforeEach
     void preparar() {
+        refreshTokenRepository.deleteAll();
         boletaRepository.deleteAll();
         productoRepository.deleteAll();
         categoriaRepository.deleteAll();
@@ -51,9 +56,20 @@ class FlujoCompraIntegrationTest {
                 .precio(650000).precioOferta(600000).unidadesDisponibles(2).alertaDisponibilidad(1).categoria(depto)
                 .region("Región Metropolitana de Santiago").comuna("Providencia").direccion("Av. Pedro de Valdivia 1204")
                 .m2(55).dormitorios(2).banos(1).estado("publicada").imagenes(List.of("/img/prop-1-1.jpg")).build());
+        usuarioRepository.save(Usuario.builder().run("111111111").nombre("Admin").apellidos("Aura")
+                .correo("admin@duoc.cl").clave(new BCryptPasswordEncoder().encode("admin123")).rol(Rol.ADMIN)
+                .region("Región Metropolitana de Santiago").comuna("Santiago").direccion("Av. Apoquindo 3000").build());
         usuarioRepository.save(Usuario.builder().run("333333333").nombre("Matías").apellidos("Fernández Lira")
-                .correo("cliente@gmail.com").clave("x").rol(Rol.CLIENTE)
+                .correo("cliente@gmail.com").clave(new BCryptPasswordEncoder().encode("cliente123")).rol(Rol.CLIENTE)
                 .region("Región Metropolitana de Santiago").comuna("La Florida").direccion("Av. Vicuña Mackenna 8900").build());
+    }
+
+    private String token(String correo, String clave) throws Exception {
+        String respuesta = mockMvc.perform(post("/api/v1/auth/login").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"correo\":\"%s\",\"clave\":\"%s\"}".formatted(correo, clave)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        return "Bearer " + JsonPath.read(respuesta, "$.accessToken");
     }
 
     @Test
@@ -67,14 +83,15 @@ class FlujoCompraIntegrationTest {
                  "tarjeta":{"titular":"Matías Fernández","numero":"4242 4242 4242 4242","vencimiento":"12/39","cvv":"123"}}
                 """.formatted(LocalDate.now().plusDays(7));
 
-        mockMvc.perform(post("/api/v1/boletas").contentType(MediaType.APPLICATION_JSON).content(json))
+        String cliente = token("cliente@gmail.com", "cliente123");
+        mockMvc.perform(post("/api/v1/boletas").header("Authorization", cliente).contentType(MediaType.APPLICATION_JSON).content(json))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.estado").value("pagada"))
                 .andExpect(jsonPath("$.total").value(600000))
                 .andExpect(jsonPath("$.items[0].propiedadId").value("PR-1001"));
 
         assertThat(productoRepository.findById("PR-1001").orElseThrow().getUnidadesDisponibles()).isEqualTo(1);
-        mockMvc.perform(get("/api/v1/boletas/usuario/cliente@gmail.com"))
+        mockMvc.perform(get("/api/v1/boletas/usuario/cliente@gmail.com").header("Authorization", cliente))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1));
     }
@@ -82,7 +99,7 @@ class FlujoCompraIntegrationTest {
     @Test
     @DisplayName("Dada una categoría con propiedades, cuando se elimina por la API, entonces responde 409")
     void categoriaConProductos() throws Exception {
-        mockMvc.perform(delete("/api/v1/categorias/departamento"))
+        mockMvc.perform(delete("/api/v1/categorias/departamento").header("Authorization", token("admin@duoc.cl", "admin123")))
                 .andExpect(status().isConflict());
     }
 
