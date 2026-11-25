@@ -1,0 +1,64 @@
+# AuraArriendos: 3 contenedores separados (FrontEnd, BackEnd y Base de datos)
+# Uso:  cp .env.example .env   ->   docker compose up -d --build
+services:
+
+  db:
+    image: mysql:8.4
+    container_name: aura-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      TZ: America/Santiago
+    volumes:
+      - aura-db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [aura-red]
+
+  backend:
+    build: .
+    container_name: aura-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      PORT: 8080
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGENES: http://localhost:${FRONTEND_PORT:-3000}
+      TZ: America/Santiago
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    networks: [aura-red]
+
+  frontend:
+    build:
+      context: ${FRONTEND_PATH:-../proyectoauraarriendos}
+      args:
+        # nginx del contenedor reenvía /api al backend, así el navegador no tiene problemas de CORS
+        VITE_API_URL: /api/v1
+    container_name: aura-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+    networks: [aura-red]
+
+volumes:
+  aura-db-data:
+
+networks:
+  aura-red:

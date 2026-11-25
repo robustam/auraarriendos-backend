@@ -14,7 +14,9 @@ API REST hecha con **Spring Boot 3.3 + Java 21 + MySQL**, documentada con **Swag
 | Bean Validation | Validación de los datos que llegan a la API |
 | Spring HATEOAS | Versión v2 de la API con enlaces de navegación |
 | springdoc-openapi (Swagger) | Documentación en `/doc/swagger-ui.html` |
-| BCrypt (spring-security-crypto) | Contraseñas encriptadas |
+| Spring Security + JWT (jjwt) | Login, roles y protección de rutas |
+| BCrypt | Contraseñas encriptadas |
+| Docker + Docker Compose | 3 contenedores: frontend, backend y base de datos |
 | DataFaker | Datos de ejemplo al iniciar en perfil `dev` |
 | JUnit 5 + Mockito + H2 | Pruebas unitarias y de integración |
 | Lombok | Menos código repetido en las entidades |
@@ -43,6 +45,7 @@ src/main/java/cl/duoc/auraarriendos
 ├── assemblers/      Construyen los enlaces HATEOAS
 ├── dto/             Lo que entra y sale de la API
 ├── exception/       Errores con formato JSON único
+├── security/        JWT, filtro, reglas por rol y login
 ├── config/          Swagger, CORS y carga de datos
 └── util/            Validaciones (RUN, correo, tarjeta)
 ```
@@ -80,6 +83,53 @@ Al iniciar por primera vez se cargan los datos del sitio y datos de ejemplo de D
 | Administrador | admin@duoc.cl | admin123 |
 | Vendedor | vendedor@gmail.com | vende123 |
 | Cliente | cliente@gmail.com | cliente123 |
+
+## Seguridad (JWT + roles)
+
+1. `POST /api/v1/auth/login` con `{"correo","clave"}` devuelve:
+   - `accessToken`: dura **15 minutos**. Se envía en cada petición: `Authorization: Bearer <token>`.
+   - `refreshToken`: dura **7 días**. Sirve para pedir tokens nuevos en `POST /api/v1/auth/refresh`.
+2. **Verificación**: el filtro `JwtAuthFilter` revisa la firma y la expiración del token en cada petición.
+3. **Renovación con rotación**: cada refresh token se puede usar **una sola vez**. Si alguien reutiliza uno viejo
+   (posible robo), se cierran todas las sesiones de ese usuario.
+4. `POST /api/v1/auth/logout` revoca el refresh token.
+
+| Acción | Público | Cliente | Vendedor | Administrador |
+|---|:---:|:---:|:---:|:---:|
+| Ver catálogo y categorías | ✔ | ✔ | ✔ | ✔ |
+| Registrarse / iniciar sesión | ✔ | | | |
+| Comprar (POST boletas), ver **sus** boletas | | ✔ | | ✔ |
+| Publicar su propiedad, ver **sus** publicaciones | | ✔ | | ✔ |
+| Ver todos los productos y todas las boletas | | | ✔ | ✔ |
+| Crear, editar y eliminar productos, categorías, usuarios | | | | ✔ |
+
+Sin token → **401**. Con token pero sin el rol necesario → **403**.
+En Swagger usa el botón **Authorize** y pega el `accessToken`.
+
+## Docker (3 contenedores)
+
+Deja las dos carpetas una al lado de la otra:
+
+```
+mi-carpeta/
+├── auraarriendos-backend/     (este repositorio, tiene docker-compose.yml)
+└── proyectoauraarriendos/     (repositorio del frontend)
+```
+
+```bash
+cd auraarriendos-backend
+cp .env.example .env            # y cambia las claves
+docker compose up -d --build
+```
+
+| Contenedor | Imagen | URL |
+|---|---|---|
+| `aura-frontend` | nginx:alpine (React compilado) | http://localhost:3000 |
+| `aura-backend` | eclipse-temurin:21-jre-alpine | http://localhost:8080/doc/swagger-ui.html |
+| `aura-db` | mysql:8.4 | puerto interno 3306 |
+
+Las claves (base de datos y JWT) **no están en el código**: vienen del archivo `.env`, que no se sube a GitHub.
+Para detener: `docker compose down` (agrega `-v` para borrar también los datos).
 
 ## Pruebas
 
